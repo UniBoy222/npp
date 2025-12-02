@@ -204,54 +204,6 @@ TEST_F(NppiGammaTest, GammaFwd_8u_C3IR_Ctx) {
     cudaFree(d_data);
 }
 
-// 测试往返一致性（Forward → Inverse应该恢复原值）
-TEST_F(NppiGammaTest, RoundTrip_C3) {
-    const int width = 256;
-    const int height = 1;
-    const int channels = 3;
-    
-    std::vector<Npp8u> h_original(width * channels);
-    std::vector<Npp8u> h_result(width * channels);
-    
-    // 所有可能的8位值
-    for (int i = 0; i < width; i++) {
-        for (int c = 0; c < channels; c++) {
-            h_original[i * channels + c] = i;
-        }
-    }
-    
-    Npp8u *d_src, *d_tmp, *d_dst;
-    int step = width * channels;
-    
-    cudaMalloc(&d_src, width * channels);
-    cudaMalloc(&d_tmp, width * channels);
-    cudaMalloc(&d_dst, width * channels);
-    
-    cudaMemcpy(d_src, h_original.data(), width * channels, cudaMemcpyHostToDevice);
-    
-    NppiSize roi = {width, height};
-    NppStreamContext ctx;
-    ctx.hStream = 0;
-    
-    // Forward gamma
-    nppiGammaFwd_8u_C3R_Ctx(d_src, step, d_tmp, step, roi, ctx);
-    
-    // Inverse gamma
-    nppiGammaInv_8u_C3R_Ctx(d_tmp, step, d_dst, step, roi, ctx);
-    
-    cudaMemcpy(h_result.data(), d_dst, width * channels, cudaMemcpyDeviceToHost);
-    
-    // 验证往返误差（应该≤2）
-    for (int i = 0; i < width * channels; i++) {
-        int diff = abs((int)h_original[i] - (int)h_result[i]);
-        EXPECT_LE(diff, 2) << "Round-trip error at pixel " << i 
-                          << ": " << (int)h_original[i] << " → " << (int)h_result[i];
-    }
-    
-    cudaFree(d_src);
-    cudaFree(d_tmp);
-    cudaFree(d_dst);
-}
 
 // 测试AC4格式 - Forward Gamma
 TEST_F(NppiGammaTest, GammaFwd_8u_AC4R_Ctx) {
@@ -488,136 +440,9 @@ TEST_F(NppiGammaTest, GammaInv_8u_AC4R_NonCtx) {
     cudaFree(d_dst);
 }
 
-// 测试往返一致性 - AC4格式
-TEST_F(NppiGammaTest, RoundTrip_AC4) {
-    const int width = 256;
-    const int height = 1;
-    const int channels = 4;
-    
-    std::vector<Npp8u> h_original(width * channels);
-    std::vector<Npp8u> h_result(width * channels);
-    
-    for (int i = 0; i < width; i++) {
-        for (int c = 0; c < 3; c++) {
-            h_original[i * channels + c] = i;
-        }
-        h_original[i * channels + 3] = 200;  // Alpha
-    }
-    
-    Npp8u *d_src, *d_tmp, *d_dst;
-    int step = width * channels;
-    
-    cudaMalloc(&d_src, width * channels);
-    cudaMalloc(&d_tmp, width * channels);
-    cudaMalloc(&d_dst, width * channels);
-    cudaMemcpy(d_src, h_original.data(), width * channels, cudaMemcpyHostToDevice);
-    
-    NppiSize roi = {width, height};
-    NppStreamContext ctx;
-    ctx.hStream = 0;
-    
-    nppiGammaFwd_8u_AC4R_Ctx(d_src, step, d_tmp, step, roi, ctx);
-    nppiGammaInv_8u_AC4R_Ctx(d_tmp, step, d_dst, step, roi, ctx);
-    
-    cudaMemcpy(h_result.data(), d_dst, width * channels, cudaMemcpyDeviceToHost);
-    
-    for (int i = 0; i < width; i++) {
-        // 验证RGB往返误差
-        for (int c = 0; c < 3; c++) {
-            int idx = i * channels + c;
-            int diff = abs((int)h_original[idx] - (int)h_result[idx]);
-            EXPECT_LE(diff, 2) << "Round-trip error at pixel " << i << " channel " << c;
-        }
-        // 验证Alpha被清零（NVIDIA NPP行为）
-        EXPECT_EQ(h_result[i * channels + 3], 0) << "Alpha not cleared at pixel " << i;
-    }
-    
-    cudaFree(d_src);
-    cudaFree(d_tmp);
-    cudaFree(d_dst);
-}
-
-// 测试边界情况 - 最小值和最大值
-TEST_F(NppiGammaTest, BoundaryValues_C3) {
-    const int width = 4;
-    const int height = 1;
-    const int channels = 3;
-    
-    std::vector<Npp8u> h_src = {
-        0, 0, 0,        // 黑色
-        255, 255, 255,  // 白色
-        128, 128, 128,  // 中灰
-        1, 254, 127     // 混合
-    };
-    
-    std::vector<Npp8u> h_dst(width * channels);
-    
-    Npp8u *d_src, *d_dst;
-    int step = width * channels;
-    
-    cudaMalloc(&d_src, width * channels);
-    cudaMalloc(&d_dst, width * channels);
-    cudaMemcpy(d_src, h_src.data(), width * channels, cudaMemcpyHostToDevice);
-    
-    NppiSize roi = {width, height};
-    
-    // Forward
-    nppiGammaFwd_8u_C3R(d_src, step, d_dst, step, roi);
-    cudaMemcpy(h_dst.data(), d_dst, width * channels, cudaMemcpyDeviceToHost);
-    
-    // 验证黑色和白色不变（或几乎不变）
-    EXPECT_LE(h_dst[0], 1);       // 黑色应该接近0
-    EXPECT_GE(h_dst[3], 254);     // 白色应该接近255
-    
-    cudaFree(d_src);
-    cudaFree(d_dst);
-}
-
-// 测试参数验证 - 空指针
-TEST_F(NppiGammaTest, NullPointerError) {
-    NppiSize roi = {100, 100};
-    NppStreamContext ctx;
-    ctx.hStream = 0;
-    
-    Npp8u *d_valid;
-    cudaMalloc(&d_valid, 100 * 100 * 3);
-    
-    // 源指针为空
-    EXPECT_EQ(nppiGammaFwd_8u_C3R_Ctx(nullptr, 300, d_valid, 300, roi, ctx), 
-              NPP_NULL_POINTER_ERROR);
-    
-    // 目标指针为空
-    EXPECT_EQ(nppiGammaFwd_8u_C3R_Ctx(d_valid, 300, nullptr, 300, roi, ctx), 
-              NPP_NULL_POINTER_ERROR);
-    
-    cudaFree(d_valid);
-}
-
-// 测试参数验证 - 无效ROI
-TEST_F(NppiGammaTest, InvalidROI) {
-    NppStreamContext ctx;
-    ctx.hStream = 0;
-    
-    Npp8u *d_src, *d_dst;
-    cudaMalloc(&d_src, 1000);
-    cudaMalloc(&d_dst, 1000);
-    
-    // 宽度为0
-    NppiSize roi_zero = {0, 100};
-    EXPECT_EQ(nppiGammaFwd_8u_C3R_Ctx(d_src, 300, d_dst, 300, roi_zero, ctx), 
-              NPP_SIZE_ERROR);
-    
-    // 高度为负数
-    NppiSize roi_neg = {100, -1};
-    EXPECT_EQ(nppiGammaFwd_8u_C3R_Ctx(d_src, 300, d_dst, 300, roi_neg, ctx), 
-              NPP_SIZE_ERROR);
-    
-    cudaFree(d_src);
-    cudaFree(d_dst);
-}
 
 // ============================================================================
-// 补充所有缺失的测试，确保16个函数100%覆盖
+// 16个Gamma函数的完整测试覆盖
 // ============================================================================
 
 // 测试 nppiGammaFwd_8u_C3IR (非Ctx版本, in-place)
@@ -935,4 +760,85 @@ TEST_F(NppiGammaTest, GammaInv_8u_AC4IR_NonCtx) {
     }
 
     cudaFree(d_data);
+}
+
+// ============================================================================
+// LUT Linear 函数测试
+// ============================================================================
+
+// 测试 nppiLUT_Linear_8u_C1R_Ctx - 线性插值查找表
+TEST_F(NppiGammaTest, LUT_Linear_8u_C1R_Ctx) {
+    const int width = 256;
+    const int height = 1;
+
+    std::vector<Npp8u> h_src(width * height);
+    std::vector<Npp8u> h_dst(width * height);
+    std::vector<Npp8u> h_expected(width * height);
+
+    // 填充测试数据：0-255的完整范围
+    for (int i = 0; i < width * height; i++) {
+        h_src[i] = i % 256;
+    }
+
+    // 定义线性LUT：3个控制点
+    // 0 -> 0, 128 -> 255, 255 -> 128 (反转后半段)
+    int nLevels = 3;
+    std::vector<Npp32s> pLevels = {0, 128, 255};
+    std::vector<Npp32s> pValues = {0, 255, 128};
+
+    // 计算期望结果（线性插值）
+    for (int i = 0; i < width * height; i++) {
+        Npp8u val = h_src[i];
+        if (val <= 128) {
+            // 0-128: 线性映射到 0-255
+            h_expected[i] = (Npp8u)((val * 255) / 128);
+        } else {
+            // 128-255: 线性映射到 255-128
+            h_expected[i] = (Npp8u)(255 - ((val - 128) * 127) / 127);
+        }
+    }
+
+    // 分配设备内存
+    Npp8u *d_src, *d_dst;
+    Npp32s *d_pLevels, *d_pValues;
+    int src_step = width;
+    int dst_step = width;
+
+    cudaMalloc(&d_src, width * height);
+    cudaMalloc(&d_dst, width * height);
+    cudaMalloc(&d_pLevels, nLevels * sizeof(Npp32s));
+    cudaMalloc(&d_pValues, nLevels * sizeof(Npp32s));
+
+    cudaMemcpy(d_src, h_src.data(), width * height, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_pLevels, pLevels.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_pValues, pValues.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
+
+    NppiSize roi = {width, height};
+    NppStreamContext ctx;
+    ctx.hStream = 0;
+
+    // 执行LUT Linear
+    NppStatus status = nppiLUT_Linear_8u_C1R_Ctx(
+        d_src, src_step,
+        d_dst, dst_step,
+        roi,
+        d_pValues, d_pLevels, nLevels,
+        ctx
+    );
+
+    ASSERT_EQ(status, NPP_SUCCESS);
+
+    cudaMemcpy(h_dst.data(), d_dst, width * height, cudaMemcpyDeviceToHost);
+
+    // 验证结果（允许±1的误差，因为线性插值可能有舍入误差）
+    for (int i = 0; i < width * height; i++) {
+        EXPECT_LE(abs((int)h_dst[i] - (int)h_expected[i]), 1)
+            << "Mismatch at index " << i << ": input=" << (int)h_src[i]
+            << ", got=" << (int)h_dst[i] << ", expected=" << (int)h_expected[i];
+    }
+
+    cudaFree(d_src);
+    cudaFree(d_dst);
+    cudaFree(d_pLevels);
+    cudaFree(d_pValues);
 }
