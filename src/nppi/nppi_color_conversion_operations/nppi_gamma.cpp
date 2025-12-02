@@ -15,6 +15,7 @@ NppStatus nppiGammaFwd_8u_AC4R_Ctx(const Npp8u* pSrc, int nSrcStep, Npp8u* pDst,
 NppStatus nppiGammaFwd_8u_AC4IR_Ctx(Npp8u* pSrcDst, int nSrcDstStep, NppiSize oSizeROI, NppStreamContext nppStreamCtx);
 NppStatus nppiGammaInv_8u_AC4R_Ctx(const Npp8u* pSrc, int nSrcStep, Npp8u* pDst, int nDstStep, NppiSize oSizeROI, NppStreamContext nppStreamCtx);
 NppStatus nppiGammaInv_8u_AC4IR_Ctx(Npp8u* pSrcDst, int nSrcDstStep, NppiSize oSizeROI, NppStreamContext nppStreamCtx);
+NppStatus nppiLUT_Linear_8u_C1R_Ctx(const Npp8u* pSrc, int nSrcStep, Npp8u* pDst, int nDstStep, NppiSize oSizeROI, const Npp32s* pValues, const Npp32s* pLevels, int nLevels, NppStreamContext nppStreamCtx);
 }
 
 // ============================================================================

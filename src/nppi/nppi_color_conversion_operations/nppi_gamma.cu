@@ -121,7 +121,7 @@ __global__ void gamma_kernel(
 
         // Set Alpha channel to 0 if AC4 format (matching NVIDIA NPP behavior)
         // NVIDIA NPP clears alpha channel instead of copying it
-        if constexpr (Channels == 4) {
+        if (Channels == 4) {
             dst_row[pixel_idx + 3] = 0;
         }
     }
@@ -139,16 +139,14 @@ __global__ void gamma_inplace_kernel(
 
         int pixel_idx = x * Channels;
 
-        // In-place modify RGB channels
+        // In-place modify RGB channels only
         #pragma unroll
         for (int c = 0; c < 3; c++) {
             row[pixel_idx + c] = op(row[pixel_idx + c]);
         }
 
-        // Set Alpha channel to 0 if AC4 format (matching NVIDIA NPP behavior)
-        if constexpr (Channels == 4) {
-            row[pixel_idx + 3] = 0;
-        }
+        // AC4IR: Alpha channel remains unchanged (in-place operation preserves alpha)
+        // Do NOT modify the alpha channel for in-place operations
     }
 }
 
@@ -267,6 +265,94 @@ NppStatus nppiGammaInv_8u_AC4R_Ctx(const Npp8u* pSrc, int nSrcStep, Npp8u* pDst,
 // Inverse Gamma: AC4IR
 NppStatus nppiGammaInv_8u_AC4IR_Ctx(Npp8u* pSrcDst, int nSrcDstStep, NppiSize oSizeROI, NppStreamContext nppStreamCtx) {
     return gamma_execute_inplace<4, GammaInvOp>(pSrcDst, nSrcDstStep, oSizeROI, nppStreamCtx);
+}
+
+// ============================================================================
+// LUT Linear - Linear Interpolation Lookup Table
+// ============================================================================
+
+// CUDA kernel for linear interpolation LUT
+__global__ void lut_linear_8u_c1r_kernel(
+    const Npp8u* pSrc, int nSrcStep,
+    Npp8u* pDst, int nDstStep,
+    int width, int height,
+    const Npp32s* pValues, const Npp32s* pLevels, int nLevels
+) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x < width && y < height) {
+        const Npp8u* src_row = (const Npp8u*)((const char*)pSrc + y * nSrcStep);
+        Npp8u* dst_row = (Npp8u*)((char*)pDst + y * nDstStep);
+
+        Npp32s input = src_row[x];
+
+        // Find the interval [pLevels[i], pLevels[i+1]] containing input
+        Npp32s output;
+
+        if (input <= pLevels[0]) {
+            // Below first level
+            output = pValues[0];
+        } else if (input >= pLevels[nLevels - 1]) {
+            // Above last level
+            output = pValues[nLevels - 1];
+        } else {
+            // Linear interpolation between two levels
+            for (int i = 0; i < nLevels - 1; i++) {
+                if (input >= pLevels[i] && input <= pLevels[i + 1]) {
+                    // Linear interpolation formula:
+                    // output = pValues[i] + (input - pLevels[i]) * (pValues[i+1] - pValues[i]) / (pLevels[i+1] - pLevels[i])
+                    Npp32s level_diff = pLevels[i + 1] - pLevels[i];
+                    Npp32s value_diff = pValues[i + 1] - pValues[i];
+                    Npp32s input_offset = input - pLevels[i];
+
+                    output = pValues[i] + (input_offset * value_diff) / level_diff;
+                    break;
+                }
+            }
+        }
+
+        // Clamp output to [0, 255]
+        output = max(0, min(255, output));
+        dst_row[x] = (Npp8u)output;
+    }
+}
+
+// LUT Linear implementation
+NppStatus nppiLUT_Linear_8u_C1R_Ctx(
+    const Npp8u* pSrc, int nSrcStep,
+    Npp8u* pDst, int nDstStep,
+    NppiSize oSizeROI,
+    const Npp32s* pValues, const Npp32s* pLevels, int nLevels,
+    NppStreamContext nppStreamCtx
+) {
+    // Parameter validation
+    if (!pSrc || !pDst || !pValues || !pLevels) return NPP_NULL_POINTER_ERROR;
+    if (oSizeROI.width <= 0 || oSizeROI.height <= 0) return NPP_SIZE_ERROR;
+    if (nLevels < 2) return NPP_LUT_NUMBER_OF_LEVELS_ERROR;
+
+    int min_step = oSizeROI.width * sizeof(Npp8u);
+    if (nSrcStep < min_step || nDstStep < min_step) return NPP_STEP_ERROR;
+
+    // Configure kernel launch parameters
+    dim3 blockSize(16, 16);
+    dim3 gridSize(
+        (oSizeROI.width + blockSize.x - 1) / blockSize.x,
+        (oSizeROI.height + blockSize.y - 1) / blockSize.y
+    );
+
+    // Launch kernel
+    lut_linear_8u_c1r_kernel<<<gridSize, blockSize, 0, nppStreamCtx.hStream>>>(
+        pSrc, nSrcStep, pDst, nDstStep,
+        oSizeROI.width, oSizeROI.height,
+        pValues, pLevels, nLevels
+    );
+
+    // Check for kernel launch errors
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) return NPP_CUDA_KERNEL_EXECUTION_ERROR;
+
+    return NPP_SUCCESS;
 }
 
 } // extern "C"
