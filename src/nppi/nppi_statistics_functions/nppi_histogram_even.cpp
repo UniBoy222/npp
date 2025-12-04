@@ -25,11 +25,11 @@ NppStatus nppiHistogramEven_16s_C4R_Ctx_impl(const Npp16s *pSrc, int nSrcStep,
 
 NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx_impl(NppiSize oSizeROI,
                                                           int nLevels[4],
-                                                          int *hpBufferSize);
+                                                          size_t *hpBufferSize);
 
 NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx_impl(NppiSize oSizeROI,
                                                           int nLevels[4],
-                                                          int *hpBufferSize);
+                                                          size_t *hpBufferSize);
 }
 
 // Input validation helper
@@ -76,7 +76,7 @@ static inline NppStatus validateHistogramEvenInputs(const void *pSrc,
 
 NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(NppiSize oSizeROI,
                                                      int nLevels[4],
-                                                     int *hpBufferSize,
+                                                     size_t *hpBufferSize,
                                                      NppStreamContext nppStreamCtx) {
   (void)nppStreamCtx; // Stream context not used for buffer size calculation
 
@@ -93,7 +93,7 @@ NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(NppiSize oSizeROI,
 
 NppStatus nppiHistogramEvenGetBufferSize_16u_C4R(NppiSize oSizeROI,
                                                  int nLevels[4],
-                                                 int *hpBufferSize) {
+                                                 size_t *hpBufferSize) {
   NppStreamContext nppStreamCtx;
   nppGetStreamContext(&nppStreamCtx);
   return nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);
@@ -105,7 +105,7 @@ NppStatus nppiHistogramEvenGetBufferSize_16u_C4R(NppiSize oSizeROI,
 
 NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(NppiSize oSizeROI,
                                                      int nLevels[4],
-                                                     int *hpBufferSize,
+                                                     size_t *hpBufferSize,
                                                      NppStreamContext nppStreamCtx) {
   (void)nppStreamCtx; // Stream context not used for buffer size calculation
 
@@ -122,7 +122,7 @@ NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(NppiSize oSizeROI,
 
 NppStatus nppiHistogramEvenGetBufferSize_16s_C4R(NppiSize oSizeROI,
                                                  int nLevels[4],
-                                                 int *hpBufferSize) {
+                                                 size_t *hpBufferSize) {
   NppStreamContext nppStreamCtx;
   nppGetStreamContext(&nppStreamCtx);
   return nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);

@@ -276,11 +276,11 @@ extern "C" {
 
 // Get buffer size for histogram computation
 
-NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx_impl(NppiSize oSizeROI, int nLevels[4], int *hpBufferSize) {
+NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx_impl(NppiSize oSizeROI, int nLevels[4], size_t *hpBufferSize) {
   // Calculate required buffer size for 4-channel histogram
-  int totalHistogramSize = 0;
+  size_t totalHistogramSize = 0;
   for (int c = 0; c < 4; c++) {
-    totalHistogramSize += (nLevels[c] - 1) * sizeof(Npp32s);
+    totalHistogramSize += (size_t)(nLevels[c] - 1) * sizeof(Npp32s);
   }
 
   // Buffer size includes space for all channel histograms and some temporary workspace
@@ -289,11 +289,11 @@ NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx_impl(NppiSize oSizeROI, int
   return NPP_SUCCESS;
 }
 
-NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx_impl(NppiSize oSizeROI, int nLevels[4], int *hpBufferSize) {
+NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx_impl(NppiSize oSizeROI, int nLevels[4], size_t *hpBufferSize) {
   // Calculate required buffer size for 4-channel histogram
-  int totalHistogramSize = 0;
+  size_t totalHistogramSize = 0;
   for (int c = 0; c < 4; c++) {
-    totalHistogramSize += (nLevels[c] - 1) * sizeof(Npp32s);
+    totalHistogramSize += (size_t)(nLevels[c] - 1) * sizeof(Npp32s);
   }
 
   // Buffer size includes space for all channel histograms and some temporary workspace
