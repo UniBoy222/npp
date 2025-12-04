@@ -1,11 +1,21 @@
 #include "npp.h"
-#include <cuda_runtime.h>
+#include "framework/npp_test_base.h"
 #include <gtest/gtest.h>
 #include <vector>
 
-class NPPILUTTest : public ::testing::Test {
+using namespace npp_functional_test;
+
+/**
+ * @brief NPP LUT (Look-Up Table) Linear Interpolation Tests
+ *
+ * Tests for nppiLUT_Linear_8u_C1R family of functions.
+ * These tests verify linear interpolation lookup table operations
+ * on 8-bit unsigned single-channel images.
+ */
+class NPPILUTTest : public NppTestBase {
 protected:
   void SetUp() override {
+    NppTestBase::SetUp();
     width = 16;
     height = 12;
     roi.width = width;
@@ -16,142 +26,109 @@ protected:
   NppiSize roi;
 };
 
-// 测试8位无符号单通道线性LUT
-TEST_F(NPPILUTTest, LUT_Linear_8u_C1R_Basic) {
+/**
+ * @brief Test nppiLUT_Linear_8u_C1R basic functionality
+ *
+ * Verifies linear interpolation LUT with inversion mapping:
+ * - Input 0 -> Output 255
+ * - Input 128 -> Output 127
+ * - Input 255 -> Output 0
+ */
+TEST_F(NPPILUTTest, LUT_Linear_8u_C1R) {
   size_t dataSize = width * height;
-  std::vector<Npp8u> srcData(dataSize), dstData(dataSize);
 
-  // 生成测试数据：0-255的渐变
+  std::vector<Npp8u> srcData(dataSize);
   for (size_t i = 0; i < dataSize; i++) {
     srcData[i] = (Npp8u)(i % 256);
   }
 
-  // 创建LUT：反转映射 (255-x)
-  int nLevels = 3;
   std::vector<Npp32s> pLevels = {0, 128, 255};
   std::vector<Npp32s> pValues = {255, 127, 0};
+  int nLevels = pLevels.size();
 
-  // 分配GPU内存
-  int srcStep, dstStep;
-  Npp8u *d_src = nppiMalloc_8u_C1(width, height, &srcStep);
-  Npp8u *d_dst = nppiMalloc_8u_C1(width, height, &dstStep);
+  NppImageMemory<Npp8u> src(width, height, 1);
+  NppImageMemory<Npp8u> dst(width, height, 1);
 
-  // 分配LUT的device内存
   Npp32s *d_pValues, *d_pLevels;
   cudaMalloc(&d_pValues, nLevels * sizeof(Npp32s));
   cudaMalloc(&d_pLevels, nLevels * sizeof(Npp32s));
   cudaMemcpy(d_pValues, pValues.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
   cudaMemcpy(d_pLevels, pLevels.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
 
-  // 使用RAII模式确保内存清理
-  struct ResourceGuard {
-    Npp8u *src, *dst;
-    Npp32s *values, *levels;
-    ResourceGuard(Npp8u *s, Npp8u *d, Npp32s *v, Npp32s *l) : src(s), dst(d), values(v), levels(l) {}
-    ~ResourceGuard() {
-      if (src) nppiFree(src);
-      if (dst) nppiFree(dst);
-      if (values) cudaFree(values);
-      if (levels) cudaFree(levels);
-    }
-  } guard(d_src, d_dst, d_pValues, d_pLevels);
+  src.copyFromHost(srcData);
 
-  ASSERT_NE(d_src, nullptr);
-  ASSERT_NE(d_dst, nullptr);
-
-  // 按行复制数据到GPU
-  for (int y = 0; y < height; y++) {
-    cudaMemcpy((char *)d_src + y * srcStep, srcData.data() + y * width, width * sizeof(Npp8u), cudaMemcpyHostToDevice);
-  }
-
-  // 调用NPP函数（使用device指针）
-  NppStatus status = nppiLUT_Linear_8u_C1R(d_src, srcStep, d_dst, dstStep, roi, d_pValues, d_pLevels, nLevels);
+  NppStatus status = nppiLUT_Linear_8u_C1R(
+      src.get(), src.step(),
+      dst.get(), dst.step(),
+      roi,
+      d_pValues, d_pLevels, nLevels
+  );
 
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  // 按行拷贝结果回主机
-  for (int y = 0; y < height; y++) {
-    cudaMemcpy(dstData.data() + y * width, (char *)d_dst + y * dstStep, width * sizeof(Npp8u), cudaMemcpyDeviceToHost);
-  }
+  std::vector<Npp8u> dstData;
+  dst.copyToHost(dstData);
 
-  // Validate结果：检查几个关键点
-  EXPECT_EQ(dstData[0], 255);   // 输入0应该映射到255
-  EXPECT_EQ(dstData[128], 127); // 输入128应该映射到127
-  if (dataSize > 255) {
-    // 只有当数据足够大时才测试255索引
-    size_t idx255 = 255;
-    EXPECT_EQ(dstData[idx255], 0); // 输入255应该映射到0
-  }
-
-  // 资源将由ResourceGuard自动清理
-}
-
-// 测试8位无符号单通道线性LUT (Ctx版本)
-TEST_F(NPPILUTTest, LUT_Linear_8u_C1R_Ctx) {
-  size_t dataSize = width * height;
-  std::vector<Npp8u> srcData(dataSize), dstData(dataSize);
-
-  // 生成测试数据：0-255的渐变
-  for (size_t i = 0; i < dataSize; i++) {
-    srcData[i] = (Npp8u)(i % 256);
-  }
-
-  // 创建LUT：反转映射 (255-x)
-  int nLevels = 3;
-  std::vector<Npp32s> pLevels = {0, 128, 255};
-  std::vector<Npp32s> pValues = {255, 127, 0};
-
-  // 分配GPU内存
-  int srcStep, dstStep;
-  Npp8u *d_src = nppiMalloc_8u_C1(width, height, &srcStep);
-  Npp8u *d_dst = nppiMalloc_8u_C1(width, height, &dstStep);
-
-  // 分配LUT的device内存
-  Npp32s *d_pValues, *d_pLevels;
-  cudaMalloc(&d_pValues, nLevels * sizeof(Npp32s));
-  cudaMalloc(&d_pLevels, nLevels * sizeof(Npp32s));
-  cudaMemcpy(d_pValues, pValues.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_pLevels, pLevels.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
-
-  struct ResourceGuard {
-    Npp8u *src, *dst;
-    Npp32s *values, *levels;
-    ResourceGuard(Npp8u *s, Npp8u *d, Npp32s *v, Npp32s *l) : src(s), dst(d), values(v), levels(l) {}
-    ~ResourceGuard() {
-      if (src) nppiFree(src);
-      if (dst) nppiFree(dst);
-      if (values) cudaFree(values);
-      if (levels) cudaFree(levels);
-    }
-  } guard(d_src, d_dst, d_pValues, d_pLevels);
-
-  ASSERT_NE(d_src, nullptr);
-  ASSERT_NE(d_dst, nullptr);
-
-  // 复制数据到GPU
-  for (int y = 0; y < height; y++) {
-    cudaMemcpy((char *)d_src + y * srcStep, srcData.data() + y * width, width * sizeof(Npp8u), cudaMemcpyHostToDevice);
-  }
-
-  // 创建NppStreamContext
-  NppStreamContext nppStreamCtx;
-  nppStreamCtx.hStream = 0; // 使用默认流
-
-  // 调用Ctx版本（使用device指针）
-  NppStatus status = nppiLUT_Linear_8u_C1R_Ctx(d_src, srcStep, d_dst, dstStep, roi, d_pValues, d_pLevels, nLevels, nppStreamCtx);
-
-  EXPECT_EQ(status, NPP_SUCCESS);
-
-  // 拷贝结果回主机
-  for (int y = 0; y < height; y++) {
-    cudaMemcpy(dstData.data() + y * width, (char *)d_dst + y * dstStep, width * sizeof(Npp8u), cudaMemcpyDeviceToHost);
-  }
-
-  // 验证结果
   EXPECT_EQ(dstData[0], 255);
   EXPECT_EQ(dstData[128], 127);
   if (dataSize > 255) {
-    size_t idx255 = 255;
-    EXPECT_EQ(dstData[idx255], 0);
+    EXPECT_EQ(dstData[255], 0);
   }
+
+  cudaFree(d_pValues);
+  cudaFree(d_pLevels);
+}
+
+/**
+ * @brief Test nppiLUT_Linear_8u_C1R_Ctx with stream context
+ *
+ * Verifies the context-aware version that supports custom CUDA streams.
+ */
+TEST_F(NPPILUTTest, LUT_Linear_8u_C1R_Ctx) {
+  size_t dataSize = width * height;
+
+  std::vector<Npp8u> srcData(dataSize);
+  for (size_t i = 0; i < dataSize; i++) {
+    srcData[i] = (Npp8u)(i % 256);
+  }
+
+  std::vector<Npp32s> pLevels = {0, 128, 255};
+  std::vector<Npp32s> pValues = {255, 127, 0};
+  int nLevels = pLevels.size();
+
+  NppImageMemory<Npp8u> src(width, height, 1);
+  NppImageMemory<Npp8u> dst(width, height, 1);
+
+  Npp32s *d_pValues, *d_pLevels;
+  cudaMalloc(&d_pValues, nLevels * sizeof(Npp32s));
+  cudaMalloc(&d_pLevels, nLevels * sizeof(Npp32s));
+  cudaMemcpy(d_pValues, pValues.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_pLevels, pLevels.data(), nLevels * sizeof(Npp32s), cudaMemcpyHostToDevice);
+
+  src.copyFromHost(srcData);
+
+  NppStreamContext nppStreamCtx;
+  nppStreamCtx.hStream = 0;
+
+  NppStatus status = nppiLUT_Linear_8u_C1R_Ctx(
+      src.get(), src.step(),
+      dst.get(), dst.step(),
+      roi,
+      d_pValues, d_pLevels, nLevels,
+      nppStreamCtx
+  );
+
+  EXPECT_EQ(status, NPP_SUCCESS);
+
+  std::vector<Npp8u> dstData;
+  dst.copyToHost(dstData);
+
+  EXPECT_EQ(dstData[0], 255);
+  EXPECT_EQ(dstData[128], 127);
+  if (dataSize > 255) {
+    EXPECT_EQ(dstData[255], 0);
+  }
+
+  cudaFree(d_pValues);
+  cudaFree(d_pLevels);
 }
