@@ -6,12 +6,12 @@
 using namespace npp_functional_test;
 
 /**
- * @brief NPP HistogramEven 16-bit C4R Tests
+ * @brief NPP HistogramEven Tests
  *
  * Tests for nppiHistogramEven_16u_C4R and nppiHistogramEven_16s_C4R families.
  * These tests verify basic histogram computation on 4-channel 16-bit images.
  */
-class NPPIHistogramEven16BitC4RTest : public NppTestBase {
+class NPPIHistogramEvenC4RTest : public NppTestBase {
 protected:
   void SetUp() override {
     NppTestBase::SetUp();
@@ -30,7 +30,7 @@ protected:
  *
  * Verifies histogram computation for 16-bit unsigned 4-channel images.
  */
-TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R) {
+TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   size_t dataSize = width * height * 4;
 
   // Generate test data with known distribution
@@ -56,10 +56,14 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R) {
   DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
   DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
 
-  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
+  Npp32s *pHist[4];
+  pHist[0] = hist0.get();
+  pHist[1] = hist1.get();
+  pHist[2] = hist2.get();
+  pHist[3] = hist3.get();
 
   // Get buffer size
-  int bufferSize;
+  size_t bufferSize = 0;
   NppStatus status = nppiHistogramEvenGetBufferSize_16u_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
@@ -75,17 +79,15 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R) {
   EXPECT_EQ(status, NPP_SUCCESS);
 
   // Verify histogram results
-  std::vector<Npp32s> histData0, histData1, histData2, histData3;
+  std::vector<Npp32s> histData0, histData1;
   hist0.copyToHost(histData0);
   hist1.copyToHost(histData1);
-  hist2.copyToHost(histData2);
-  hist3.copyToHost(histData3);
 
-  // All pixels in channel 0 have value 100, which maps to bin 50 (100 * 255 / 512)
+  // All pixels in channel 0 have value 100, which maps to bin 49 (100 * 255 / 512)
   int expectedBin0 = (100 * (nLevels[0] - 1)) / (nUpperLevel[0] - nLowerLevel[0]);
   EXPECT_GT(histData0[expectedBin0], 0);
 
-  // All pixels in channel 1 have value 200, which maps to bin 100
+  // All pixels in channel 1 have value 200, which maps to bin 99
   int expectedBin1 = (200 * (nLevels[1] - 1)) / (nUpperLevel[1] - nLowerLevel[1]);
   EXPECT_GT(histData1[expectedBin1], 0);
 }
@@ -95,7 +97,7 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R) {
  *
  * Verifies the context-aware version that supports custom CUDA streams.
  */
-TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R_Ctx) {
+TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   size_t dataSize = width * height * 4;
 
   std::vector<Npp16u> srcData(dataSize);
@@ -118,9 +120,13 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R_Ctx) {
   DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
   DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
 
-  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
+  Npp32s *pHist[4];
+  pHist[0] = hist0.get();
+  pHist[1] = hist1.get();
+  pHist[2] = hist2.get();
+  pHist[3] = hist3.get();
 
-  int bufferSize;
+  size_t bufferSize = 0;
   NppStreamContext nppStreamCtx;
   nppStreamCtx.hStream = 0;
 
@@ -149,7 +155,7 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16u_C4R_Ctx) {
  *
  * Verifies histogram computation for 16-bit signed 4-channel images.
  */
-TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16s_C4R) {
+TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   size_t dataSize = width * height * 4;
 
   // Generate test data with signed values
@@ -174,9 +180,13 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16s_C4R) {
   DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
   DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
 
-  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
+  Npp32s *pHist[4];
+  pHist[0] = hist0.get();
+  pHist[1] = hist1.get();
+  pHist[2] = hist2.get();
+  pHist[3] = hist3.get();
 
-  int bufferSize;
+  size_t bufferSize = 0;
   NppStatus status = nppiHistogramEvenGetBufferSize_16s_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
@@ -214,7 +224,7 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16s_C4R) {
  *
  * Verifies the context-aware version for signed 16-bit data.
  */
-TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16s_C4R_Ctx) {
+TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   size_t dataSize = width * height * 4;
 
   std::vector<Npp16s> srcData(dataSize);
@@ -237,9 +247,13 @@ TEST_F(NPPIHistogramEven16BitC4RTest, HistogramEven_16s_C4R_Ctx) {
   DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
   DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
 
-  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
+  Npp32s *pHist[4];
+  pHist[0] = hist0.get();
+  pHist[1] = hist1.get();
+  pHist[2] = hist2.get();
+  pHist[3] = hist3.get();
 
-  int bufferSize;
+  size_t bufferSize = 0;
   NppStreamContext nppStreamCtx;
   nppStreamCtx.hStream = 0;
 
