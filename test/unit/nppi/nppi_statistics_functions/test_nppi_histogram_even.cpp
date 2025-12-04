@@ -60,7 +60,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
   // Get buffer size
-  size_t bufferSize = 0;
+  int bufferSize = 0;
   NppStatus status = nppiHistogramEvenGetBufferSize_16u_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
@@ -122,7 +122,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
-  size_t bufferSize = 0;
+  int bufferSize = 0;
   NppStreamContext nppStreamCtx;
   nppStreamCtx.hStream = 0;
 
@@ -181,7 +181,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
-  size_t bufferSize = 0;
+  int bufferSize = 0;
   NppStatus status = nppiHistogramEvenGetBufferSize_16s_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
@@ -248,7 +248,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
-  size_t bufferSize = 0;
+  int bufferSize = 0;
   NppStreamContext nppStreamCtx;
   nppStreamCtx.hStream = 0;
 
