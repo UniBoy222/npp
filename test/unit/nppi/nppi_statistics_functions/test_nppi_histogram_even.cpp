@@ -51,10 +51,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
   // Allocate histogram buffers
-  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
-  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
-  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
-  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
+  DeviceMemory<Npp32s> hist0, hist1, hist2, hist3;
+  hist0.allocate(nLevels[0] - 1);
+  hist1.allocate(nLevels[1] - 1);
+  hist2.allocate(nLevels[2] - 1);
+  hist3.allocate(nLevels[3] - 1);
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
@@ -111,10 +112,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   Npp32s nLowerLevel[4] = {0, 0, 0, 0};
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
-  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
-  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
-  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
-  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
+  DeviceMemory<Npp32s> hist0, hist1, hist2, hist3;
+  hist0.allocate(nLevels[0] - 1);
+  hist1.allocate(nLevels[1] - 1);
+  hist2.allocate(nLevels[2] - 1);
+  hist3.allocate(nLevels[3] - 1);
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
@@ -167,10 +169,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
-  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
-  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
-  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
-  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
+  DeviceMemory<Npp32s> hist0, hist1, hist2, hist3;
+  hist0.allocate(nLevels[0] - 1);
+  hist1.allocate(nLevels[1] - 1);
+  hist2.allocate(nLevels[2] - 1);
+  hist3.allocate(nLevels[3] - 1);
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
@@ -230,10 +233,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
-  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
-  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
-  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
-  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
+  DeviceMemory<Npp32s> hist0, hist1, hist2, hist3;
+  hist0.allocate(nLevels[0] - 1);
+  hist1.allocate(nLevels[1] - 1);
+  hist2.allocate(nLevels[2] - 1);
+  hist3.allocate(nLevels[3] - 1);
 
   Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
