@@ -51,16 +51,12 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
   // Allocate histogram buffers
-  DeviceMemory<Npp32s> hist0(nLevels[0] - 1);
-  DeviceMemory<Npp32s> hist1(nLevels[1] - 1);
-  DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
-  DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
+  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
+  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
+  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
+  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
 
-  Npp32s *pHist[4];
-  pHist[0] = hist0.get();
-  pHist[1] = hist1.get();
-  pHist[2] = hist2.get();
-  pHist[3] = hist3.get();
+  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
   // Get buffer size
   size_t bufferSize = 0;
@@ -115,16 +111,12 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   Npp32s nLowerLevel[4] = {0, 0, 0, 0};
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
-  DeviceMemory<Npp32s> hist0(nLevels[0] - 1);
-  DeviceMemory<Npp32s> hist1(nLevels[1] - 1);
-  DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
-  DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
+  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
+  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
+  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
+  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
 
-  Npp32s *pHist[4];
-  pHist[0] = hist0.get();
-  pHist[1] = hist1.get();
-  pHist[2] = hist2.get();
-  pHist[3] = hist3.get();
+  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
   size_t bufferSize = 0;
   NppStreamContext nppStreamCtx;
@@ -175,16 +167,12 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
-  DeviceMemory<Npp32s> hist0(nLevels[0] - 1);
-  DeviceMemory<Npp32s> hist1(nLevels[1] - 1);
-  DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
-  DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
+  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
+  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
+  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
+  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
 
-  Npp32s *pHist[4];
-  pHist[0] = hist0.get();
-  pHist[1] = hist1.get();
-  pHist[2] = hist2.get();
-  pHist[3] = hist3.get();
+  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
   size_t bufferSize = 0;
   NppStatus status = nppiHistogramEvenGetBufferSize_16s_C4R(roi, nLevels, &bufferSize);
@@ -242,16 +230,12 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
-  DeviceMemory<Npp32s> hist0(nLevels[0] - 1);
-  DeviceMemory<Npp32s> hist1(nLevels[1] - 1);
-  DeviceMemory<Npp32s> hist2(nLevels[2] - 1);
-  DeviceMemory<Npp32s> hist3(nLevels[3] - 1);
+  DeviceMemory<Npp32s> hist0{nLevels[0] - 1};
+  DeviceMemory<Npp32s> hist1{nLevels[1] - 1};
+  DeviceMemory<Npp32s> hist2{nLevels[2] - 1};
+  DeviceMemory<Npp32s> hist3{nLevels[3] - 1};
 
-  Npp32s *pHist[4];
-  pHist[0] = hist0.get();
-  pHist[1] = hist1.get();
-  pHist[2] = hist2.get();
-  pHist[3] = hist3.get();
+  Npp32s *pHist[4] = {hist0.get(), hist1.get(), hist2.get(), hist3.get()};
 
   size_t bufferSize = 0;
   NppStreamContext nppStreamCtx;
