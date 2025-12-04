@@ -67,7 +67,7 @@ extern "C" NppStatus nppiRectStdDev_32s32f_C1R_Ctx_impl(const Npp32s *pSrc, int 
   // Check for kernel launch errors
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
-    return NPP_KERNEL_EXECUTION_ERROR;
+    return NPP_CUDA_KERNEL_EXECUTION_ERROR;
   }
 
   return NPP_SUCCESS;
