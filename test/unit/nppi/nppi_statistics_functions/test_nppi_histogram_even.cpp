@@ -64,7 +64,8 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   NppStatus status = nppiHistogramEvenGetBufferSize_16u_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  DeviceMemory<Npp8u> deviceBuffer(bufferSize);
+  DeviceMemory<Npp8u> deviceBuffer;
+  deviceBuffer.allocate(bufferSize);
 
   // Compute histogram
   status = nppiHistogramEven_16u_C4R(
@@ -127,7 +128,8 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   NppStatus status = nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(roi, nLevels, &bufferSize, nppStreamCtx);
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  DeviceMemory<Npp8u> deviceBuffer(bufferSize);
+  DeviceMemory<Npp8u> deviceBuffer;
+  deviceBuffer.allocate(bufferSize);
 
   status = nppiHistogramEven_16u_C4R_Ctx(
       src.get(), src.step(),
@@ -181,7 +183,8 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   NppStatus status = nppiHistogramEvenGetBufferSize_16s_C4R(roi, nLevels, &bufferSize);
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  DeviceMemory<Npp8u> deviceBuffer(bufferSize);
+  DeviceMemory<Npp8u> deviceBuffer;
+  deviceBuffer.allocate(bufferSize);
 
   status = nppiHistogramEven_16s_C4R(
       src.get(), src.step(),
@@ -248,7 +251,8 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   NppStatus status = nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(roi, nLevels, &bufferSize, nppStreamCtx);
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  DeviceMemory<Npp8u> deviceBuffer(bufferSize);
+  DeviceMemory<Npp8u> deviceBuffer;
+  deviceBuffer.allocate(bufferSize);
 
   status = nppiHistogramEven_16s_C4R_Ctx(
       src.get(), src.step(),
