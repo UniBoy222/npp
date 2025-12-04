@@ -4,6 +4,8 @@
 
 // CUDA kernel for computing rectangular standard deviation
 // This computes the standard deviation within a rectangular window for each pixel
+// For each output pixel (x, y), the window in source image starts at (x + rect.x, y + rect.y)
+// and has dimensions rect.width × rect.height
 __global__ void rectStdDevKernel_32s32f_C1R(const Npp32s *pSrc, int srcStep, const Npp64f *pSqr, int sqrStep,
                                              Npp32f *pDst, int dstStep, int width, int height, NppiRect rect) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -13,11 +15,12 @@ __global__ void rectStdDevKernel_32s32f_C1R(const Npp32s *pSrc, int srcStep, con
     return;
   }
 
-  // Calculate the window boundaries for this pixel
-  int x1 = max(0, x - rect.x);
-  int y1 = max(0, y - rect.y);
-  int x2 = min(width - 1, x + rect.x + rect.width - 1);
-  int y2 = min(height - 1, y + rect.y + rect.height - 1);
+  // Calculate the window boundaries for this pixel in the source image
+  // The window starts at (x + rect.x, y + rect.y) and spans rect.width × rect.height
+  int x1 = x + rect.x;
+  int y1 = y + rect.y;
+  int x2 = x1 + rect.width - 1;
+  int y2 = y1 + rect.height - 1;
 
   // Compute sum and sum of squares within the window
   double sum = 0.0;

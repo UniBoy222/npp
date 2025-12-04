@@ -47,31 +47,36 @@ protected:
  * Verifies rectangular standard deviation computation with a simple test case.
  */
 TEST_F(NPPIRectStdDevTest, RectStdDev_32s32f_C1R) {
-  size_t dataSize = width * height;
+  // Define a 3x3 rectangular window
+  NppiRect rect = {0, 0, 3, 3}; // x, y, width, height
+
+  // Calculate required image size based on API requirements:
+  // Size needed = (oSizeROI.width + oRect.x + oRect.width, oSizeROI.height + oRect.y + oRect.height)
+  int srcWidth = roi.width + rect.x + rect.width;   // 16 + 0 + 3 = 19
+  int srcHeight = roi.height + rect.y + rect.height; // 16 + 0 + 3 = 19
+  size_t srcDataSize = srcWidth * srcHeight;
+  size_t dstDataSize = width * height;
 
   // Create source data with known pattern
-  std::vector<Npp32s> srcData(dataSize);
-  std::vector<Npp64f> sqrData(dataSize);
+  std::vector<Npp32s> srcData(srcDataSize);
+  std::vector<Npp64f> sqrData(srcDataSize);
 
-  for (size_t i = 0; i < dataSize; i++) {
+  for (size_t i = 0; i < srcDataSize; i++) {
     srcData[i] = static_cast<Npp32s>(i % 10);
     sqrData[i] = static_cast<Npp64f>(srcData[i] * srcData[i]);
   }
 
-  // Allocate device memory manually
-  int srcStep = width * sizeof(Npp32s);
-  int sqrStep = width * sizeof(Npp64f);
+  // Allocate device memory with correct sizes
+  int srcStep = srcWidth * sizeof(Npp32s);
+  int sqrStep = srcWidth * sizeof(Npp64f);
   int dstStep = width * sizeof(Npp32f);
 
-  ASSERT_EQ(cudaMalloc(&d_src, dataSize * sizeof(Npp32s)), cudaSuccess);
-  ASSERT_EQ(cudaMalloc(&d_sqr, dataSize * sizeof(Npp64f)), cudaSuccess);
-  ASSERT_EQ(cudaMalloc(&d_dst, dataSize * sizeof(Npp32f)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_src, srcDataSize * sizeof(Npp32s)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_sqr, srcDataSize * sizeof(Npp64f)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_dst, dstDataSize * sizeof(Npp32f)), cudaSuccess);
 
-  ASSERT_EQ(cudaMemcpy(d_src, srcData.data(), dataSize * sizeof(Npp32s), cudaMemcpyHostToDevice), cudaSuccess);
-  ASSERT_EQ(cudaMemcpy(d_sqr, sqrData.data(), dataSize * sizeof(Npp64f), cudaMemcpyHostToDevice), cudaSuccess);
-
-  // Define a 3x3 rectangular window
-  NppiRect rect = {1, 1, 1, 1}; // x, y, width, height
+  ASSERT_EQ(cudaMemcpy(d_src, srcData.data(), srcDataSize * sizeof(Npp32s), cudaMemcpyHostToDevice), cudaSuccess);
+  ASSERT_EQ(cudaMemcpy(d_sqr, sqrData.data(), srcDataSize * sizeof(Npp64f), cudaMemcpyHostToDevice), cudaSuccess);
 
   NppStatus status = nppiRectStdDev_32s32f_C1R(
       d_src, srcStep,
@@ -82,11 +87,11 @@ TEST_F(NPPIRectStdDevTest, RectStdDev_32s32f_C1R) {
 
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  std::vector<Npp32f> dstData(dataSize);
-  ASSERT_EQ(cudaMemcpy(dstData.data(), d_dst, dataSize * sizeof(Npp32f), cudaMemcpyDeviceToHost), cudaSuccess);
+  std::vector<Npp32f> dstData(dstDataSize);
+  ASSERT_EQ(cudaMemcpy(dstData.data(), d_dst, dstDataSize * sizeof(Npp32f), cudaMemcpyDeviceToHost), cudaSuccess);
 
   // Verify that output contains valid standard deviation values
-  for (size_t i = 0; i < dataSize; i++) {
+  for (size_t i = 0; i < dstDataSize; i++) {
     EXPECT_GE(dstData[i], 0.0f) << "Standard deviation should be non-negative at index " << i;
     EXPECT_LT(dstData[i], 100.0f) << "Standard deviation should be reasonable at index " << i;
   }
@@ -98,29 +103,33 @@ TEST_F(NPPIRectStdDevTest, RectStdDev_32s32f_C1R) {
  * Verifies the context-aware version that supports custom CUDA streams.
  */
 TEST_F(NPPIRectStdDevTest, RectStdDev_32s32f_C1R_Ctx) {
-  size_t dataSize = width * height;
+  NppiRect rect = {0, 0, 3, 3};
 
-  std::vector<Npp32s> srcData(dataSize);
-  std::vector<Npp64f> sqrData(dataSize);
+  // Calculate required image size
+  int srcWidth = roi.width + rect.x + rect.width;
+  int srcHeight = roi.height + rect.y + rect.height;
+  size_t srcDataSize = srcWidth * srcHeight;
+  size_t dstDataSize = width * height;
 
-  for (size_t i = 0; i < dataSize; i++) {
+  std::vector<Npp32s> srcData(srcDataSize);
+  std::vector<Npp64f> sqrData(srcDataSize);
+
+  for (size_t i = 0; i < srcDataSize; i++) {
     srcData[i] = static_cast<Npp32s>(i % 10);
     sqrData[i] = static_cast<Npp64f>(srcData[i] * srcData[i]);
   }
 
-  // Allocate device memory manually
-  int srcStep = width * sizeof(Npp32s);
-  int sqrStep = width * sizeof(Npp64f);
+  // Allocate device memory with correct sizes
+  int srcStep = srcWidth * sizeof(Npp32s);
+  int sqrStep = srcWidth * sizeof(Npp64f);
   int dstStep = width * sizeof(Npp32f);
 
-  ASSERT_EQ(cudaMalloc(&d_src, dataSize * sizeof(Npp32s)), cudaSuccess);
-  ASSERT_EQ(cudaMalloc(&d_sqr, dataSize * sizeof(Npp64f)), cudaSuccess);
-  ASSERT_EQ(cudaMalloc(&d_dst, dataSize * sizeof(Npp32f)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_src, srcDataSize * sizeof(Npp32s)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_sqr, srcDataSize * sizeof(Npp64f)), cudaSuccess);
+  ASSERT_EQ(cudaMalloc(&d_dst, dstDataSize * sizeof(Npp32f)), cudaSuccess);
 
-  ASSERT_EQ(cudaMemcpy(d_src, srcData.data(), dataSize * sizeof(Npp32s), cudaMemcpyHostToDevice), cudaSuccess);
-  ASSERT_EQ(cudaMemcpy(d_sqr, sqrData.data(), dataSize * sizeof(Npp64f), cudaMemcpyHostToDevice), cudaSuccess);
-
-  NppiRect rect = {1, 1, 1, 1};
+  ASSERT_EQ(cudaMemcpy(d_src, srcData.data(), srcDataSize * sizeof(Npp32s), cudaMemcpyHostToDevice), cudaSuccess);
+  ASSERT_EQ(cudaMemcpy(d_sqr, sqrData.data(), srcDataSize * sizeof(Npp64f), cudaMemcpyHostToDevice), cudaSuccess);
 
   NppStreamContext nppStreamCtx;
   nppStreamCtx.hStream = 0;
@@ -135,11 +144,11 @@ TEST_F(NPPIRectStdDevTest, RectStdDev_32s32f_C1R_Ctx) {
 
   EXPECT_EQ(status, NPP_SUCCESS);
 
-  std::vector<Npp32f> dstData(dataSize);
-  ASSERT_EQ(cudaMemcpy(dstData.data(), d_dst, dataSize * sizeof(Npp32f), cudaMemcpyDeviceToHost), cudaSuccess);
+  std::vector<Npp32f> dstData(dstDataSize);
+  ASSERT_EQ(cudaMemcpy(dstData.data(), d_dst, dstDataSize * sizeof(Npp32f), cudaMemcpyDeviceToHost), cudaSuccess);
 
   // Verify output validity
-  for (size_t i = 0; i < dataSize; i++) {
+  for (size_t i = 0; i < dstDataSize; i++) {
     EXPECT_GE(dstData[i], 0.0f);
   }
 }
