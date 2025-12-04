@@ -189,7 +189,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   deviceBuffer.allocate(bufferSize);
 
   status = nppiHistogramEven_16s_C4R(
-      src.get(), src.step(),
+      reinterpret_cast<const Npp16s*>(src.get()), src.step(),
       roi, pHist, nLevels, nLowerLevel, nUpperLevel,
       deviceBuffer.get()
   );
@@ -259,7 +259,7 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   deviceBuffer.allocate(bufferSize);
 
   status = nppiHistogramEven_16s_C4R_Ctx(
-      src.get(), src.step(),
+      reinterpret_cast<const Npp16s*>(src.get()), src.step(),
       roi, pHist, nLevels, nLowerLevel, nUpperLevel,
       deviceBuffer.get(), nppStreamCtx
   );
