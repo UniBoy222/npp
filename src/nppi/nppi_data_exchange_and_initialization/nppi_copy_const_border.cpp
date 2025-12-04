@@ -17,9 +17,8 @@ NppStatus nppiCopyConstBorder_8u_C1R_Ctx_impl(const Npp8u *pSrc, int nSrcStep,
 // Input validation helper
 static inline NppStatus validateCopyConstBorderInputs(const void *pSrc, int nSrcStep,
                                                        NppiSize oSrcSizeROI,
-                                                       void *pDst, int nDstStep,
-                                                       NppiSize oDstSizeROI,
-                                                       int nTopBorderHeight, int nLeftBorderWidth) {
+                                                       const void *pDst, int nDstStep,
+                                                       NppiSize oDstSizeROI) {
   if (oSrcSizeROI.width <= 0 || oSrcSizeROI.height <= 0) {
     return NPP_SIZE_ERROR;
   }
@@ -34,16 +33,6 @@ static inline NppStatus validateCopyConstBorderInputs(const void *pSrc, int nSrc
 
   if (!pSrc || !pDst) {
     return NPP_NULL_POINTER_ERROR;
-  }
-
-  if (nTopBorderHeight < 0 || nLeftBorderWidth < 0) {
-    return NPP_BORDER_ERROR;
-  }
-
-  // Validate that destination size is large enough to contain source + borders
-  // Note: The API allows flexible border sizes, so we just check basic constraints
-  if (oDstSizeROI.width < oSrcSizeROI.width || oDstSizeROI.height < oSrcSizeROI.height) {
-    return NPP_SIZE_ERROR;
   }
 
   return NPP_SUCCESS;
@@ -61,8 +50,7 @@ NppStatus nppiCopyConstBorder_8u_C1R_Ctx(const Npp8u *pSrc, int nSrcStep,
                                           Npp8u nValue,
                                           NppStreamContext nppStreamCtx) {
   NppStatus status = validateCopyConstBorderInputs(pSrc, nSrcStep, oSrcSizeROI,
-                                                     pDst, nDstStep, oDstSizeROI,
-                                                     nTopBorderHeight, nLeftBorderWidth);
+                                                     pDst, nDstStep, oDstSizeROI);
   if (status != NPP_SUCCESS) {
     return status;
   }
