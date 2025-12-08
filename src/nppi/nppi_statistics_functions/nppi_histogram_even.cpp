@@ -1,4 +1,5 @@
 #include "npp.h"
+#include "../../npp_version_compat.h"
 #include <cstdio>
 #include <cstring>
 #include <cuda_runtime.h>
@@ -71,15 +72,14 @@ static inline NppStatus validateHistogramEvenInputs(const void *pSrc,
 }
 
 // ============================================================================
-// nppiHistogramEvenGetBufferSize_16u_C4R - Get buffer size for 16u C4R
+// CUDA SDK 12.8+ versions (size_t)
 // ============================================================================
 
+// nppiHistogramEvenGetBufferSize_16u_C4R_Ctx - CUDA SDK 12.8+
 NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(NppiSize oSizeROI,
                                                      int nLevels[4],
                                                      size_t *hpBufferSize,
-                                                     NppStreamContext nppStreamCtx) {
-  (void)nppStreamCtx; // Stream context not used for buffer size calculation
-
+                                                     NppStreamContext /*nppStreamCtx*/) {
   if (!hpBufferSize || !nLevels) {
     return NPP_NULL_POINTER_ERROR;
   }
@@ -91,24 +91,20 @@ NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(NppiSize oSizeROI,
   return nppiHistogramEvenGetBufferSize_16u_C4R_Ctx_impl(oSizeROI, nLevels, hpBufferSize);
 }
 
+// nppiHistogramEvenGetBufferSize_16u_C4R - CUDA SDK 12.8+
 NppStatus nppiHistogramEvenGetBufferSize_16u_C4R(NppiSize oSizeROI,
                                                  int nLevels[4],
                                                  size_t *hpBufferSize) {
   NppStreamContext nppStreamCtx;
-  nppGetStreamContext(&nppStreamCtx);
+  nppStreamCtx.hStream = 0;
   return nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);
 }
 
-// ============================================================================
-// nppiHistogramEvenGetBufferSize_16s_C4R - Get buffer size for 16s C4R
-// ============================================================================
-
+// nppiHistogramEvenGetBufferSize_16s_C4R_Ctx - CUDA SDK 12.8+
 NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(NppiSize oSizeROI,
                                                      int nLevels[4],
                                                      size_t *hpBufferSize,
-                                                     NppStreamContext nppStreamCtx) {
-  (void)nppStreamCtx; // Stream context not used for buffer size calculation
-
+                                                     NppStreamContext /*nppStreamCtx*/) {
   if (!hpBufferSize || !nLevels) {
     return NPP_NULL_POINTER_ERROR;
   }
@@ -120,18 +116,74 @@ NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(NppiSize oSizeROI,
   return nppiHistogramEvenGetBufferSize_16s_C4R_Ctx_impl(oSizeROI, nLevels, hpBufferSize);
 }
 
+// nppiHistogramEvenGetBufferSize_16s_C4R - CUDA SDK 12.8+
 NppStatus nppiHistogramEvenGetBufferSize_16s_C4R(NppiSize oSizeROI,
                                                  int nLevels[4],
                                                  size_t *hpBufferSize) {
   NppStreamContext nppStreamCtx;
-  nppGetStreamContext(&nppStreamCtx);
+  nppStreamCtx.hStream = 0;
   return nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);
 }
 
 // ============================================================================
-// nppiHistogramEven_16u_C4R - 16-bit unsigned 4-channel histogram
+// CUDA SDK < 12.8 versions (int) - Function overloads
 // ============================================================================
 
+// nppiHistogramEvenGetBufferSize_16u_C4R_Ctx - CUDA SDK < 12.8
+NppStatus nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(NppiSize oSizeROI,
+                                                     int nLevels[4],
+                                                     int *hpBufferSize,
+                                                     NppStreamContext nppStreamCtx) {
+  size_t size = 0;
+  NppStatus ret = nppiHistogramEvenGetBufferSize_16u_C4R_Ctx(oSizeROI, nLevels, &size, nppStreamCtx);
+  if (ret == NPP_SUCCESS) {
+    *hpBufferSize = static_cast<int>(size);
+  }
+  return ret;
+}
+
+// nppiHistogramEvenGetBufferSize_16u_C4R - CUDA SDK < 12.8
+NppStatus nppiHistogramEvenGetBufferSize_16u_C4R(NppiSize oSizeROI,
+                                                 int nLevels[4],
+                                                 int *hpBufferSize) {
+  size_t size = 0;
+  NppStatus ret = nppiHistogramEvenGetBufferSize_16u_C4R(oSizeROI, nLevels, &size);
+  if (ret == NPP_SUCCESS) {
+    *hpBufferSize = static_cast<int>(size);
+  }
+  return ret;
+}
+
+// nppiHistogramEvenGetBufferSize_16s_C4R_Ctx - CUDA SDK < 12.8
+NppStatus nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(NppiSize oSizeROI,
+                                                     int nLevels[4],
+                                                     int *hpBufferSize,
+                                                     NppStreamContext nppStreamCtx) {
+  size_t size = 0;
+  NppStatus ret = nppiHistogramEvenGetBufferSize_16s_C4R_Ctx(oSizeROI, nLevels, &size, nppStreamCtx);
+  if (ret == NPP_SUCCESS) {
+    *hpBufferSize = static_cast<int>(size);
+  }
+  return ret;
+}
+
+// nppiHistogramEvenGetBufferSize_16s_C4R - CUDA SDK < 12.8
+NppStatus nppiHistogramEvenGetBufferSize_16s_C4R(NppiSize oSizeROI,
+                                                 int nLevels[4],
+                                                 int *hpBufferSize) {
+  size_t size = 0;
+  NppStatus ret = nppiHistogramEvenGetBufferSize_16s_C4R(oSizeROI, nLevels, &size);
+  if (ret == NPP_SUCCESS) {
+    *hpBufferSize = static_cast<int>(size);
+  }
+  return ret;
+}
+
+// ============================================================================
+// Histogram computation functions (version-independent)
+// ============================================================================
+
+// nppiHistogramEven_16u_C4R_Ctx
 NppStatus nppiHistogramEven_16u_C4R_Ctx(const Npp16u *pSrc, int nSrcStep,
                                         NppiSize oSizeROI,
                                         Npp32s *pHist[4],
@@ -152,6 +204,7 @@ NppStatus nppiHistogramEven_16u_C4R_Ctx(const Npp16u *pSrc, int nSrcStep,
                                             pDeviceBuffer, nppStreamCtx);
 }
 
+// nppiHistogramEven_16u_C4R
 NppStatus nppiHistogramEven_16u_C4R(const Npp16u *pSrc, int nSrcStep,
                                     NppiSize oSizeROI,
                                     Npp32s *pHist[4],
@@ -160,16 +213,13 @@ NppStatus nppiHistogramEven_16u_C4R(const Npp16u *pSrc, int nSrcStep,
                                     Npp32s nUpperLevel[4],
                                     Npp8u *pDeviceBuffer) {
   NppStreamContext nppStreamCtx;
-  nppGetStreamContext(&nppStreamCtx);
+  nppStreamCtx.hStream = 0;
   return nppiHistogramEven_16u_C4R_Ctx(pSrc, nSrcStep, oSizeROI, pHist,
                                        nLevels, nLowerLevel, nUpperLevel,
                                        pDeviceBuffer, nppStreamCtx);
 }
 
-// ============================================================================
-// nppiHistogramEven_16s_C4R - 16-bit signed 4-channel histogram
-// ============================================================================
-
+// nppiHistogramEven_16s_C4R_Ctx
 NppStatus nppiHistogramEven_16s_C4R_Ctx(const Npp16s *pSrc, int nSrcStep,
                                         NppiSize oSizeROI,
                                         Npp32s *pHist[4],
@@ -190,6 +240,7 @@ NppStatus nppiHistogramEven_16s_C4R_Ctx(const Npp16s *pSrc, int nSrcStep,
                                             pDeviceBuffer, nppStreamCtx);
 }
 
+// nppiHistogramEven_16s_C4R
 NppStatus nppiHistogramEven_16s_C4R(const Npp16s *pSrc, int nSrcStep,
                                     NppiSize oSizeROI,
                                     Npp32s *pHist[4],
@@ -198,7 +249,7 @@ NppStatus nppiHistogramEven_16s_C4R(const Npp16s *pSrc, int nSrcStep,
                                     Npp32s nUpperLevel[4],
                                     Npp8u *pDeviceBuffer) {
   NppStreamContext nppStreamCtx;
-  nppGetStreamContext(&nppStreamCtx);
+  nppStreamCtx.hStream = 0;
   return nppiHistogramEven_16s_C4R_Ctx(pSrc, nSrcStep, oSizeROI, pHist,
                                        nLevels, nLowerLevel, nUpperLevel,
                                        pDeviceBuffer, nppStreamCtx);
