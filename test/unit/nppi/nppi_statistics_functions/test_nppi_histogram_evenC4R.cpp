@@ -76,6 +76,9 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
 
   EXPECT_EQ(status, NPP_SUCCESS);
 
+  // Synchronize before reading results (NPP functions are asynchronous)
+  cudaDeviceSynchronize();
+
   // Verify histogram results
   std::vector<Npp32s> histData0, histData1, histData2, histData3;
   hist0.copyToHost(histData0);
@@ -160,6 +163,9 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   );
 
   EXPECT_EQ(status, NPP_SUCCESS);
+
+  // Synchronize before reading results (NPP functions are asynchronous)
+  cudaDeviceSynchronize();
 
   // Verify histogram results for all channels
   std::vector<Npp32s> histData0, histData1, histData2, histData3;
@@ -249,6 +255,9 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   );
 
   EXPECT_EQ(status, NPP_SUCCESS);
+
+  // Synchronize before reading results (NPP functions are asynchronous)
+  cudaDeviceSynchronize();
 
   // Verify histogram results for all channels
   std::vector<Npp32s> histData0, histData1, histData2, histData3;
@@ -343,6 +352,9 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   );
 
   EXPECT_EQ(status, NPP_SUCCESS);
+
+  // Synchronize before reading results (NPP functions are asynchronous)
+  cudaDeviceSynchronize();
 
   // Verify histogram results for all channels
   std::vector<Npp32s> histData0, histData1, histData2, histData3;
