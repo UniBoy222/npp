@@ -984,13 +984,13 @@ NppStatus nppiHistogramEven_16s_C4R_Ctx_impl(const Npp16s *pSrc, int nSrcStep, N
 
 __global__ void nppiHistogramRange_16u_C1R_kernel_shared(const Npp16u *pSrc, int nSrcStep, int width, int height,
                                                          Npp32s *pHist, const Npp32s *pLevels, int nLevels) {
-  extern __shared__ int shared_hist[];
+  extern __shared__ int shared_hist_16u_c1r[];
 
   int tid = threadIdx.x + threadIdx.y * blockDim.x;
   int threads_per_block = blockDim.x * blockDim.y;
 
   for (int i = tid; i < nLevels - 1; i += threads_per_block) {
-    shared_hist[i] = 0;
+    shared_hist_16u_c1r[i] = 0;
   }
   __syncthreads();
 
@@ -1010,14 +1010,14 @@ __global__ void nppiHistogramRange_16u_C1R_kernel_shared(const Npp16u *pSrc, int
     }
 
     if (bin >= 0 && bin < (nLevels - 1)) {
-      atomicAdd(&shared_hist[bin], 1);
+      atomicAdd(&shared_hist_16u_c1r[bin], 1);
     }
   }
 
   __syncthreads();
 
   for (int i = tid; i < nLevels - 1; i += threads_per_block) {
-    atomicAdd(&pHist[i], shared_hist[i]);
+    atomicAdd(&pHist[i], shared_hist_16u_c1r[i]);
   }
 }
 
@@ -1050,13 +1050,13 @@ __global__ void nppiHistogramRange_16u_C1R_kernel_global(const Npp16u *pSrc, int
 
 __global__ void nppiHistogramRange_16s_C1R_kernel_shared(const Npp16s *pSrc, int nSrcStep, int width, int height,
                                                          Npp32s *pHist, const Npp32s *pLevels, int nLevels) {
-  extern __shared__ int shared_hist[];
+  extern __shared__ int shared_hist_16s_c1r[];
 
   int tid = threadIdx.x + threadIdx.y * blockDim.x;
   int threads_per_block = blockDim.x * blockDim.y;
 
   for (int i = tid; i < nLevels - 1; i += threads_per_block) {
-    shared_hist[i] = 0;
+    shared_hist_16s_c1r[i] = 0;
   }
   __syncthreads();
 
@@ -1076,14 +1076,14 @@ __global__ void nppiHistogramRange_16s_C1R_kernel_shared(const Npp16s *pSrc, int
     }
 
     if (bin >= 0 && bin < (nLevels - 1)) {
-      atomicAdd(&shared_hist[bin], 1);
+      atomicAdd(&shared_hist_16s_c1r[bin], 1);
     }
   }
 
   __syncthreads();
 
   for (int i = tid; i < nLevels - 1; i += threads_per_block) {
-    atomicAdd(&pHist[i], shared_hist[i]);
+    atomicAdd(&pHist[i], shared_hist_16s_c1r[i]);
   }
 }
 
