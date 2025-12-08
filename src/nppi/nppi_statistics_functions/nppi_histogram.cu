@@ -657,7 +657,7 @@ NppStatus nppiHistogramRange_32f_C1R_Ctx_impl(const Npp32f *pSrc, int nSrcStep, 
 }
 
 //=============================================================================
-// 16-bit unsigned 4-channel HistogramEven kernels (merged from nppi_histogram_even.cu)
+// 16-bit unsigned 4-channel HistogramEven kernels
 //=============================================================================
 
 __global__ void nppiHistogramEven_16u_C4R_kernel_shared(const Npp16u *pSrc, int nSrcStep, int width, int height,

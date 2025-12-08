@@ -176,6 +176,70 @@ NppStatus nppiHistogramRangeGetBufferSize_32f_C1R_Ctx(NppiSize oSizeROI, int nLe
   return nppiHistogramRangeGetBufferSize_32f_C1R(oSizeROI, nLevels, hpBufferSize);
 }
 
+// 16-bit unsigned single channel - int* version
+NppStatus nppiHistogramRangeGetBufferSize_16u_C1R(NppiSize oSizeROI, int nLevels, int *hpBufferSize) {
+  return nppiHistogramEvenGetBufferSize_internal(oSizeROI, nLevels, hpBufferSize);
+}
+
+NppStatus nppiHistogramRangeGetBufferSize_16u_C1R_Ctx(NppiSize oSizeROI, int nLevels, int *hpBufferSize,
+                                                      NppStreamContext nppStreamCtx) {
+  (void)nppStreamCtx;
+  return nppiHistogramRangeGetBufferSize_16u_C1R(oSizeROI, nLevels, hpBufferSize);
+}
+
+// 16-bit signed single channel - int* version
+NppStatus nppiHistogramRangeGetBufferSize_16s_C1R(NppiSize oSizeROI, int nLevels, int *hpBufferSize) {
+  return nppiHistogramEvenGetBufferSize_internal(oSizeROI, nLevels, hpBufferSize);
+}
+
+NppStatus nppiHistogramRangeGetBufferSize_16s_C1R_Ctx(NppiSize oSizeROI, int nLevels, int *hpBufferSize,
+                                                      NppStreamContext nppStreamCtx) {
+  (void)nppStreamCtx;
+  return nppiHistogramRangeGetBufferSize_16s_C1R(oSizeROI, nLevels, hpBufferSize);
+}
+
+// 16-bit unsigned single channel - size_t* version (CUDA 12.8+)
+NppStatus nppiHistogramRangeGetBufferSize_16u_C1R_Ctx(NppiSize oSizeROI, int nLevels, size_t *hpBufferSize,
+                                                      NppStreamContext nppStreamCtx) {
+  (void)nppStreamCtx;
+  if (!hpBufferSize) {
+    return NPP_NULL_POINTER_ERROR;
+  }
+  if (oSizeROI.width <= 0 || oSizeROI.height <= 0) {
+    return NPP_SIZE_ERROR;
+  }
+  size_t histogramSize = (size_t)(nLevels - 1) * sizeof(Npp32s);
+  *hpBufferSize = histogramSize + 1024;
+  return NPP_SUCCESS;
+}
+
+NppStatus nppiHistogramRangeGetBufferSize_16u_C1R(NppiSize oSizeROI, int nLevels, size_t *hpBufferSize) {
+  NppStreamContext nppStreamCtx;
+  nppStreamCtx.hStream = 0;
+  return nppiHistogramRangeGetBufferSize_16u_C1R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);
+}
+
+// 16-bit signed single channel - size_t* version (CUDA 12.8+)
+NppStatus nppiHistogramRangeGetBufferSize_16s_C1R_Ctx(NppiSize oSizeROI, int nLevels, size_t *hpBufferSize,
+                                                      NppStreamContext nppStreamCtx) {
+  (void)nppStreamCtx;
+  if (!hpBufferSize) {
+    return NPP_NULL_POINTER_ERROR;
+  }
+  if (oSizeROI.width <= 0 || oSizeROI.height <= 0) {
+    return NPP_SIZE_ERROR;
+  }
+  size_t histogramSize = (size_t)(nLevels - 1) * sizeof(Npp32s);
+  *hpBufferSize = histogramSize + 1024;
+  return NPP_SUCCESS;
+}
+
+NppStatus nppiHistogramRangeGetBufferSize_16s_C1R(NppiSize oSizeROI, int nLevels, size_t *hpBufferSize) {
+  NppStreamContext nppStreamCtx;
+  nppStreamCtx.hStream = 0;
+  return nppiHistogramRangeGetBufferSize_16s_C1R_Ctx(oSizeROI, nLevels, hpBufferSize, nppStreamCtx);
+}
+
 //=============================================================================
 // HistogramRange Multi-channel Buffer Size APIs - C3R variants
 //=============================================================================
