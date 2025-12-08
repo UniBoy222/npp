@@ -1,5 +1,6 @@
 #include "npp.h"
 #include "framework/npp_test_base.h"
+#include <cuda_runtime.h>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -45,8 +46,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R) {
   NppImageMemory<Npp16u> src(width, height, 4);
   src.copyFromHost(srcData);
 
+  // Ensure data is copied before histogram computation
+  cudaDeviceSynchronize();
+
   // Setup histogram parameters
-  int nLevels[4] = {256, 256, 256, 256};
+  int nLevels[4] = {257, 257, 257, 257};  // nLevels must be nBins + 1
   Npp32s nLowerLevel[4] = {0, 0, 0, 0};
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
@@ -134,7 +138,10 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16u_C4R_Ctx) {
   NppImageMemory<Npp16u> src(width, height, 4);
   src.copyFromHost(srcData);
 
-  int nLevels[4] = {256, 256, 256, 256};
+  // Ensure data is copied before histogram computation
+  cudaDeviceSynchronize();
+
+  int nLevels[4] = {257, 257, 257, 257};  // nLevels must be nBins + 1
   Npp32s nLowerLevel[4] = {0, 0, 0, 0};
   Npp32s nUpperLevel[4] = {512, 512, 512, 512};
 
@@ -228,8 +235,11 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R) {
   NppImageMemory<Npp16u> src(width, height, 4);
   src.copyFromHost(srcData);
 
+  // Ensure data is copied before histogram computation
+  cudaDeviceSynchronize();
+
   // Setup histogram parameters for signed data
-  int nLevels[4] = {256, 256, 256, 256};
+  int nLevels[4] = {257, 257, 257, 257};  // nLevels must be nBins + 1
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
@@ -323,7 +333,10 @@ TEST_F(NPPIHistogramEvenC4RTest, HistogramEven_16s_C4R_Ctx) {
   NppImageMemory<Npp16u> src(width, height, 4);
   src.copyFromHost(srcData);
 
-  int nLevels[4] = {256, 256, 256, 256};
+  // Ensure data is copied before histogram computation
+  cudaDeviceSynchronize();
+
+  int nLevels[4] = {257, 257, 257, 257};  // nLevels must be nBins + 1
   Npp32s nLowerLevel[4] = {-256, -256, -256, -256};
   Npp32s nUpperLevel[4] = {256, 256, 256, 256};
 
